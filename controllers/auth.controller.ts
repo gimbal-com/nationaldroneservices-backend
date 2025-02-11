@@ -50,9 +50,9 @@ export const login = (req: Request, res: Response) => {
             return res.status(400).json({ success: false, message: 'Incorrect password' });
         }
 
-        const token = jwt.sign({ email: row.email, username: row.username, accountType: row.account_type }, process.env.JWT_SECRET || 'secret', {expiresIn: '1h'});
+        const token = jwt.sign({ id: row.id, email: row.email, username: row.username, accountType: row.account_type }, process.env.JWT_SECRET || 'secret', {expiresIn: '1h'});
 
-        res.status(200).json({ success: true, message: 'Login successful', token: `Bearer ` + token, user: { username, email: row.email, accountType: row.account_type } });
+        res.status(200).json({ success: true, message: 'Login successful', token: token, user: { username, email: row.email, accountType: row.account_type, id: row.id } });
     });
 }
 
