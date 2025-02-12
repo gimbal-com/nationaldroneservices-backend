@@ -4,6 +4,7 @@ import bodyParser from 'body-parser';
 import morgan from 'morgan';
 import router from '../routes';
 import passport from './passport';
+import path from 'path';
 
 const initializeExpress = () => {
     const app: Application = express();
@@ -17,6 +18,8 @@ const initializeExpress = () => {
     app.use('/api', router);
     app.use(passport.initialize());
     
+    app.use('/images', express.static(path.join(__dirname, '../uploads')));
+
 
     return app;
 }

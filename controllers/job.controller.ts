@@ -74,7 +74,7 @@ export const getJobDetail = (req: Request, res: Response) => {
     });
 }
 
-export const getJobList = (req: Request, res: Response) => { 
+export const getJobList = (req: Request, res: Response) => {
     const userId = req.query.userId;
 
     db.all(
@@ -92,7 +92,6 @@ export const getJobList = (req: Request, res: Response) => {
 
 export const getFoldersByJobId = (req: Request, res: Response) => {
     const { id } = req.params;
-    console.log(`Fetching folders for job ID: ${id}`); // Log job ID
 
     db.all('SELECT * FROM folders WHERE job_id = ?', [id], (err, folders) => {
         if (err) {
@@ -105,7 +104,6 @@ export const getFoldersByJobId = (req: Request, res: Response) => {
             return res.status(404).json({ success: false, message: 'No folders found for this job' });
         }
 
-        console.log(`Folders found for job ID: ${id}`, folders); // Log found folders
         res.status(200).json({ success: true, folders });
     });
 }
@@ -135,7 +133,7 @@ export const createFolderByJobId = async (req: Request, res: Response) => {
             const folderId = this.lastID; // Get auto-incremented ID of the new folder
             return res.status(201).json({
                 success: true,
-                folder: { id: folderId, jobId: Number(jobId), name }
+                folder: { id: folderId, job_id: jobId, name }
             });
         }
     );
@@ -143,8 +141,6 @@ export const createFolderByJobId = async (req: Request, res: Response) => {
 
 export const getFilesByJobIdAndFolderId = (req: Request, res: Response) => {
     const { jobId, folderId } = req.params;
-
-    console.log(`Fetching files for folder ${folderId} in job ${jobId}`);
 
     // Assuming you have a `files` table that contains `folder_id`, `job_id`, and `name`
     db.all('SELECT * FROM files WHERE job_id = ? AND folder_id = ?', [jobId, folderId], (err, files) => {
@@ -155,7 +151,7 @@ export const getFilesByJobIdAndFolderId = (req: Request, res: Response) => {
 
         if (!files || files.length === 0) {
             console.warn(`No files found for folder ${folderId} in job ${jobId}`);
-            return res.status(404).json({ success: false, message: 'No files found for this folder' });
+            return res.status(200).json({ success: false, message: 'No files found for this folder' });
         }
 
         console.log(`Files found for folder ${folderId}:`, files);
@@ -166,8 +162,8 @@ export const getFilesByJobIdAndFolderId = (req: Request, res: Response) => {
 export const uploadFiles = (req: Request, res: Response) => {
     const { jobId, folderId } = req.params;
 
-    const uploadDir = path.join(__dirname, '../../uploads');
-    const form = new formidable.IncomingForm({uploadDir: uploadDir, keepExtensions: true});
+    const uploadDir = path.join(__dirname, '../uploads');
+    const form = formidable({ keepExtensions: true });
 
     // Ensure the upload directory exists
     if (!fs.existsSync(uploadDir)) {
@@ -184,32 +180,31 @@ export const uploadFiles = (req: Request, res: Response) => {
             return res.status(400).json({ success: false, message: 'Invalid job ID or folder ID' });
         }
 
-        const fileEntries = Object.values(files);
+        const fileEntries = files.files;
 
-        fileEntries.forEach((file: any) => {
-            const oldPath = file.path;
-            const newPath = path.join(uploadDir, file.name);
+        let newFiles: any = [];
 
-            fs.rename(oldPath, newPath, (renameErr) => {
-                if (renameErr) {
-                    console.error('Error moving the file:', renameErr);
-                    return res.status(500).json({ success: false, message: 'File move error' });
-                }
+        fileEntries?.forEach((file: any) => {
+            const oldPath = file.filepath;
+            const newPath = path.join(uploadDir, file.newFilename);
 
-                // Insert file record into the database
-                db.run(
-                    `INSERT INTO files (job_id, folder_id, name, path) VALUES (?, ?, ?, ?)`,
-                    [jobId, folderId, file.name, newPath],
-                    (dbErr) => {
-                        if (dbErr) {
-                            console.error('Error saving file record:', dbErr);
-                            return res.status(500).json({ success: false, message: 'Database error' });
-                        }
+            fs.writeFileSync(newPath, fs.readFileSync(oldPath));
+
+            // Insert file record into the database
+            db.run(
+                `INSERT INTO files (job_id, folder_id, name, path) VALUES (?, ?, ?, ?)`,
+                [jobId, folderId, file.newFilename, file.newFilename],
+                (dbErr) => {
+                    if (dbErr) {
+                        console.error('Error saving file record:', dbErr);
+                        return res.status(500).json({ success: false, message: 'Database error' });
                     }
-                );
-            });
-        });
+                }
+            );
 
-        res.status(200).json({ success: true, message: 'Files uploaded successfully' });
+            newFiles.push({job_id: jobId, folder_id: folderId, name: file.newFilename, path: file.newFilename});
+        })
+
+        res.status(200).json({ success: true, message: 'Files uploaded successfully', files: newFiles });
     });
 };
