@@ -4,9 +4,15 @@ import formidable from 'formidable';
 import fs from 'fs';
 import path from 'path';
 
+/**
+ * @description Creates a new job, its default "Images" folder, and optionally inserts polygons if provided.
+ * @param req - Request object that contains the job details.
+ * @param res - Response object to send back the result.
+ */
 export const createJob = (req: Request, res: Response) => {
     const { title, description, budget, address, polygons, userId } = req.body;
 
+    // Insert new job record into the jobs table
     db.run(
         `INSERT INTO jobs (title, description, budget, address, user_id)
          VALUES (?, ?, ?, ?, ?)`,
@@ -21,6 +27,7 @@ export const createJob = (req: Request, res: Response) => {
             // Create the default "Images" folder for the job
             db.run(
                 `INSERT INTO folders (job_id, name) VALUES (?, ?)`,
+
                 [jobId, 'Images'],
                 (folderErr) => {
                     if (folderErr) {
@@ -36,6 +43,7 @@ export const createJob = (req: Request, res: Response) => {
                         polygons.forEach(polygon => {
                             db.run(
                                 `INSERT INTO polygons (job_id, geojson) VALUES (?, ?)`,
+
                                 [jobId, JSON.stringify(polygon)],
                                 (polygonErr) => {
                                     if (polygonErr) {
@@ -58,8 +66,15 @@ export const createJob = (req: Request, res: Response) => {
     );
 }
 
+/**
+ * @description Fetches detailed information about a specific job based on its ID.
+ * @param req - Request object that contains the job ID in the parameters.
+ * @param res - Response object to send back the job details.
+ */
 export const getJobDetail = (req: Request, res: Response) => {
     const { id } = req.params;
+
+    // Fetch job details by job ID
     db.get('SELECT * FROM jobs WHERE id = ?', [id], (err, job) => {
         if (err) {
             return res.status(500).json({ success: false, message: 'Failed to fetch job details' });
@@ -74,9 +89,15 @@ export const getJobDetail = (req: Request, res: Response) => {
     });
 }
 
+/**
+ * @description Fetches a list of jobs for a specific user.
+ * @param req - Request object that contains the user ID in the query parameters.
+ * @param res - Response object to send back the list of jobs.
+ */
 export const getJobList = (req: Request, res: Response) => {
     const userId = req.query.userId;
 
+    // Fetch all jobs by user ID
     db.all(
         'SELECT * FROM jobs WHERE user_id = ?',
         [userId],
@@ -90,9 +111,15 @@ export const getJobList = (req: Request, res: Response) => {
     );
 }
 
+/**
+ * @description Fetches the list of folders associated with a specific job ID.
+ * @param req - Request object that contains the job ID in the parameters.
+ * @param res - Response object to send back the list of folders.
+ */
 export const getFoldersByJobId = (req: Request, res: Response) => {
     const { id } = req.params;
 
+    // Fetch all folders for the given job ID
     db.all('SELECT * FROM folders WHERE job_id = ?', [id], (err, folders) => {
         if (err) {
             console.error('Database error:', err); // Log database errors
@@ -108,10 +135,16 @@ export const getFoldersByJobId = (req: Request, res: Response) => {
     });
 }
 
+/**
+ * @description Creates a new folder for a specific job.
+ * @param req - Request object that contains the job ID in the parameters and the folder name in the body.
+ * @param res - Response object to send back the result.
+ */
 export const createFolderByJobId = async (req: Request, res: Response) => {
     const { jobId } = req.params; // Get jobId from the URL
     const { name } = req.body;   // Get folder name from the request body
 
+    // Validate the folder name and job ID
     if (!name || !jobId) {
         res
             .status(400)
@@ -121,6 +154,7 @@ export const createFolderByJobId = async (req: Request, res: Response) => {
     // Insert the new folder into the folders table
     db.run(
         `INSERT INTO folders (job_id, name) VALUES (?, ?)`,
+
         [jobId, name],
         function (err) {
             if (err) {
@@ -140,10 +174,15 @@ export const createFolderByJobId = async (req: Request, res: Response) => {
     );
 }
 
+/**
+ * @description Fetches the list of files for a specific job and folder combination.
+ * @param req - Request object that contains job ID and folder ID in the parameters.
+ * @param res - Response object to send back the list of files.
+ */
 export const getFilesByJobIdAndFolderId = (req: Request, res: Response) => {
     const { jobId, folderId } = req.params;
 
-    // Assuming you have a `files` table that contains `folder_id`, `job_id`, and `name`
+    // Fetch all files for the given job and folder IDs
     db.all('SELECT * FROM files WHERE job_id = ? AND folder_id = ?', [jobId, folderId], (err, files) => {
         if (err) {
             console.error('Database error fetching files:', err);
@@ -160,6 +199,11 @@ export const getFilesByJobIdAndFolderId = (req: Request, res: Response) => {
     });
 }
 
+/**
+ * @description Handles the file upload for a specific job and folder.
+ * @param req - Request object that contains job ID and folder ID in the parameters.
+ * @param res - Response object to send back the result.
+ */
 export const uploadFiles = (req: Request, res: Response) => {
     const { jobId, folderId } = req.params;
 
@@ -171,6 +215,7 @@ export const uploadFiles = (req: Request, res: Response) => {
         fs.mkdirSync(uploadDir, { recursive: true });
     }
 
+    // Parse the form to handle file uploads
     form.parse(req, (err, fields, files) => {
         if (err) {
             console.error('Error parsing the files:', err);
@@ -189,6 +234,7 @@ export const uploadFiles = (req: Request, res: Response) => {
             const oldPath = file.filepath;
             const newPath = path.join(uploadDir, file.newFilename);
 
+            // Move the uploaded file to the designated folder
             fs.writeFileSync(newPath, fs.readFileSync(oldPath));
 
             // Insert file record into the database
