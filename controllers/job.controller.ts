@@ -133,6 +133,7 @@ export const createFolderByJobId = async (req: Request, res: Response) => {
             const folderId = this.lastID; // Get auto-incremented ID of the new folder
             return res.status(201).json({
                 success: true,
+                message: 'Successfully created.',
                 folder: { id: folderId, job_id: jobId, name }
             });
         }
