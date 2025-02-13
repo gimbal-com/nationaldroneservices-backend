@@ -7,7 +7,7 @@ import path from 'path';
 export const getCertificateFiles = (req: Request, res: Response) => {
     const userId = req.query.userId;
 
-    db.run(
+    db.all(
         `SELECT * FROM cert_files WHERE user_id = ?`,
         [userId],
         (err: any, certs: any) => {
@@ -67,4 +67,18 @@ export const uploadCertFiles = (req: Request, res: Response) => {
 
         res.status(200).json({ success: true, message: 'Files uploaded successfully', files: newFiles });
     });
+}
+
+export const getuserListByAdmin = (req: Request, res: Response) => {
+    db.all(
+        `SELECT * FROM users`,
+        (err: any, users: any) => {
+            if(err) {
+                console.log(err);
+                return res.status(402).json({ success: false, users: null });
+            }
+
+            return res.status(200).json({ success: true, users });
+        }
+    )
 }

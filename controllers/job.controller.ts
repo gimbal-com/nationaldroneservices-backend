@@ -267,12 +267,38 @@ export const uploadFiles = (req: Request, res: Response) => {
  * API functions for Pilot Requests *
  ************************************/
 
+export const getJobListByPilot = (req: Request, res: Response) => {
+    db.all(
+        `SELECT * from jobs`,
+        (err: any, jobs: any) => {
+            if(err) {
+                console.log(err);
+                return res.status(402).json({success: false, jobs: null});
+            }
+
+            return res.status(200).json({ success: true, jobs });
+        }
+    )
+}
+
 //************************************************************************** */
 
 /************************************
  * API functions for Admin Requests *
  ************************************/
 
+export const getJobListByAdmin = (req: Request, res: Response) => {
+    db.all(
+        `SELECT * from jobs`,
+        (err: any, jobs: any) => {
+            if(err) {
+                console.log(err);
+                return res.status(402).json({success: false, jobs: null});
+            }
 
+            return res.status(200).json({ success: true, jobs });
+        }
+    )
+}
 
 /*************************************************************************** */

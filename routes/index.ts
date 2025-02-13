@@ -23,8 +23,13 @@ router.get('/client/jobs/:jobId/folders/:folderId/files', jobController.getFiles
 router.post('/client/jobs/:jobId/folders/:folderId/files', jobController.uploadFiles);                     // route for uploading Files
 
 // Routes for admin action
+router.get('/admin/jobs', jobController.getJobListByAdmin);
+router.get('/admin/users', userController.getuserListByAdmin);
+
+
+// Routes for pilot action
 router.get('/pilot/profile', userController.getCertificateFiles);
 router.post('/pilot/profile/certs', userController.uploadCertFiles);
-// Routes for pilot action
+router.get('/pilot/jobs', jobController.getJobListByPilot);
 
 export default router;
