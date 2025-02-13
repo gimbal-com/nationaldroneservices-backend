@@ -62,4 +62,12 @@ db.run(`CREATE TABLE IF NOT EXISTS files (
     FOREIGN KEY (folder_id) REFERENCES folders(id) ON DELETE CASCADE
 )`);
 
+db.run(`CREATE TABLE IF NOT EXISTS cert_files (    
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    path TEXT NOT NULL,
+    uploaded_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+)`)
+
 export default db;

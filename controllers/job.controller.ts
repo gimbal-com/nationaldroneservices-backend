@@ -4,6 +4,11 @@ import formidable from 'formidable';
 import fs from 'fs';
 import path from 'path';
 
+
+/************************************
+ * API functions for client Requests *
+*************************************/
+
 /**
  * @description Creates a new job, its default "Images" folder, and optionally inserts polygons if provided.
  * @param req - Request object that contains the job details.
@@ -207,7 +212,7 @@ export const getFilesByJobIdAndFolderId = (req: Request, res: Response) => {
 export const uploadFiles = (req: Request, res: Response) => {
     const { jobId, folderId } = req.params;
 
-    const uploadDir = path.join(__dirname, '../uploads');
+    const uploadDir = path.join(__dirname, '../uploads/jobs');
     const form = formidable({ keepExtensions: true });
 
     // Ensure the upload directory exists
@@ -255,3 +260,19 @@ export const uploadFiles = (req: Request, res: Response) => {
         res.status(200).json({ success: true, message: 'Files uploaded successfully', files: newFiles });
     });
 };
+
+//************************************************************************** */
+
+/************************************
+ * API functions for Pilot Requests *
+ ************************************/
+
+//************************************************************************** */
+
+/************************************
+ * API functions for Admin Requests *
+ ************************************/
+
+
+
+/*************************************************************************** */
